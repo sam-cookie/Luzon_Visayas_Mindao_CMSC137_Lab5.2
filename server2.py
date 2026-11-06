@@ -1,21 +1,8 @@
 import socket
 import threading
 
-PUBLIC_KEY  = 463 # e
-PRIVATE_KEY = 127 # d
-MODULUS_N   = 4331 # n
-
-def rsa_encrypt(message: str) -> str:
-    return ' '.join(str(pow(ord(ch), PUBLIC_KEY, MODULUS_N)) for ch in message)
-
-def rsa_decrypt(cipher_text: str) -> str:
-    numbers = cipher_text.strip().split(' ')
-    return ''.join(chr(pow(int(n), PRIVATE_KEY, MODULUS_N)) for n in numbers)
-
-
 HOST = '127.0.0.1'
 PORT = 55555
-
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -25,6 +12,7 @@ server.listen()
 clients = []
 
 def broadcast(raw_bytes: bytes, sender_client):
+    # send the message to everyone except the person who sent it
     for client in clients:
         if client != sender_client:
             try:
@@ -36,26 +24,26 @@ def remove_client(client):
     if client in clients:
         clients.remove(client)
         client.close()
+        print(f"[SERVER] A user disconnected.")
 
 def handle_client(client):
+    # just forward whatever comes in — server can't read it anyway
     while True:
         try:
             raw = client.recv(4096)
             if not raw:
                 break
-            cipher_text = raw.decode('utf-8')
-            try:
-                plaintext = rsa_decrypt(cipher_text)
-                print(f"[SERVER received – decrypted] {plaintext}")
-            except Exception:
-                print(f"[SERVER] Could not decrypt message: {cipher_text}")
+
+            print(f"[SERVER] Forwarding encrypted message (cannot decrypt)...")
             broadcast(raw, client)
+
         except:
             break
+
     remove_client(client)
 
 def receive_connections():
-    print(f"[SERVER] Running on {HOST}:{PORT} with RSA encryption (e={PUBLIC_KEY}, N={MODULUS_N})")
+    print(f"[SERVER] Running on {HOST}:{PORT}")
     print("[SERVER] Press Ctrl+C to stop.\n")
     server.settimeout(1.0)
 
@@ -68,7 +56,7 @@ def receive_connections():
                 thread = threading.Thread(target=handle_client, args=(client,), daemon=True)
                 thread.start()
             except socket.timeout:
-                continue   
+                continue
     except KeyboardInterrupt:
         print("\n[SERVER] Shutting down...")
     finally:
@@ -77,25 +65,5 @@ def receive_connections():
         server.close()
         print("[SERVER] Closed.")
 
-def server_chat():
-    """Let the server owner also send messages to all clients."""
-    nickname = "Server"
-    while True:
-        try:
-            msg = input("> ").strip()
-            if not msg:
-                continue
-            full_message = f"{nickname}: {msg}"
-            cipher_text = rsa_encrypt(full_message)
-            print(f"[ENCRYPTED sent]     {cipher_text}")
-            broadcast(cipher_text.encode('utf-8'), None)  # None = no sender to exclude
-        except (EOFError, KeyboardInterrupt):
-            break
-
 if __name__ == "__main__":
-    chat_thread = threading.Thread(target=server_chat, daemon=True)
-    chat_thread.start()
     receive_connections()
-
-
-
