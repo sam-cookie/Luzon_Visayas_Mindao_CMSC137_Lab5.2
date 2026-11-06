@@ -92,9 +92,7 @@ while True:
     except ValueError:
         print("  [!] Invalid input. Please enter a numeric private key.")
 
-# Ask for the recipient's public key — this is what was missing before
-# In a real system this would be exchanged out-of-band (e.g. shared beforehand)
-RECIPIENT_N = 4331  # everyone shares the same modulus
+RECIPIENT_N = 4331  
 
 print("\nEnter your recipient's public key details:")
 RECIPIENT_E = int(input("  Recipient's e: ").strip())
@@ -116,7 +114,6 @@ def receive_messages():
 
             print(f"\n[ENCRYPTED received] {raw}")
 
-            # try decrypting with your private key and your own N
             # if it wasn't encrypted for you, it'll come out as gibberish
             try:
                 plaintext = rsa_decrypt(raw, d=PRIVATE_KEY, n=MODULUS_N)
