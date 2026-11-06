@@ -3,8 +3,7 @@ import threading
 import sys
 import json
 
-MY_PUBLIC_KEY = 463
-MODULUS_N     = 4331
+MODULUS_N = 4331
 
 def rsa_encrypt(message: str, e: int, n: int) -> str:
     return ' '.join(str(pow(ord(ch), e, n)) for ch in message)
@@ -78,6 +77,13 @@ nickname = input("Enter your nickname: ").strip()
 
 print("\n[!] You appear to be in a public place.")
 print("    Your private key input will be hidden with asterisks.\n")
+
+while True:
+    try:
+        MY_PUBLIC_KEY = int(input("Enter your public key (e): ").strip())
+        break
+    except ValueError:
+        print("  [!] Invalid input. Please enter a numeric public key.")
 
 while True:
     try:
